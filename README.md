@@ -23,7 +23,7 @@ This project aims to estimate the distribution of a stock's future price/return 
 
    $r_t \sim \mathcal{N}(\mu, \sigma^2)$ (i.i.d.).
 
-   This is because under GBM, the stock prices $S_T$ are lognormally distributed.
+   Under GBM, daily log returns are modeled as Normal, wich implies the stock future prices $S_T$ are lognormally distributed.
 
 4. We assume trading days per year are 252 days.
 5. We will use MLE for the model's estimates.
