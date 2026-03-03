@@ -1,37 +1,106 @@
+<p align="center">
+  <b>Monte Carlo Simulation | Rolling Backtest | Risk Metrics</b>
+</p>
+
 # Monte-Carlo-Stock-Simulator
-This project aims to estimate the distribution of a stock's future price/return over a 5-year horizon and summarize risk.
-## Parameters
-1. The target stock is Amazon's stock.
-2. The estimation range is from 01/01/2020 to 01/01/2025. The simulation horizon is 5 years into the future.
-3. Random Seed will be set as 422.
-4. The number of simulation paths is 1000.
-5. Forecast horizon in trading days is 1260 trading days.
+A reproducible Python project that builds and validates a Monte Carlo-based probabilistic forecasting system for equity prices using Geometric Brownian Motion(GBM).
+The project estimates the future distribution of stock prices over a 5-year horizon and evaluates model reliability via rolling-window backtesting and tail risk metrics.
+## Problem Statement
+The goal of this project is to:
+* Estimate the distribution of future stock prices
+* Quantify downside risk (VaR, Expected Shortfall, probability of loss)
+* Validate forecast reliability using rolling backtesting
+* Analyze model calibration
+The target asset used in this study is Amazon (AMZN).
+## Data
+* Source: `yfinance`
+* Estimation window: 01/01/2020 to 01/01/2025
+* Backtest window: 01/01/2020 to 12/31/2026
+* Trading days per year: 252
 
-   $5 \times 252 = 1260$ trading days
-
-7. Time step $\Delta t$ is $1/252$
-## Expected Output
-1. It will produce metrics/tables about the expected return, median return, probability of loss, expected end price, risk matrix, and median end price
-2. It will also generate plots to visualize the distribution of the stock's price.
-## Model Approach/Assumptions
-1. We will use adjusted close prices in this project.
-2. We model daily log returns as i.i.d. Normal:
+## Model Assumptions
+Daily log returns are modeled as:
 
    $r_t = \ln(S_t/S_{t-1})$
 
-   and assume
+We assume: 
 
    $r_t \sim \mathcal{N}(\mu, \sigma^2)$ (i.i.d.).
 
-   Under GBM, daily log returns are modeled as Normal, which implies the stock future price $S_T$ is lognormally distributed.
+Under the Geometric Brownian Motion (GBM) framework, this implies that future prices are lognormally distributed. 
 
-4. We assume trading days per year are 252 days.
-5. We will use MLE for the model's estimates.
-## Payoff in this project
-It is the buy-and-hold payoff, and we define the cumulative log return over the horizon as:
+Parameter estimation is performed using Maximum Likelihood Estimation (MLE):
+* $\mu$ = sample mean of log returns
+* $\sigma$ = sample standard deviation of log returns
 
-  $g(S_T) = \ln(S_T / S_0)$
+Time step: 
+$\Delta t$ is $1/252$
 
-The expected payoff is under the model.
-## Notes about using this model
-1. Command line usage
+## Simulation Setup
+* Forecast horizon: 5 years (1260 trading days)
+* Simulation paths: 1000
+* Random seed: 422
+* Monte Carlo engine implemented with vectorized Numpy operations
+* Two equivalent parameterizations tested (daily vs annualized) with numerical convergence check
+
+## Rolling Backtest
+A rolling-window backtest is implemented to evaluate model calibration:
+* Rolling training window: 756 trading days(~3 years)
+* Forecast horizon: 63 trading days(~3 months)
+* Step size: 21 trading days
+* 90% prediction interval (5%-95%)
+
+Evaluation metrics:
+* Empirical coverage rate
+* Average interval width
+This allows us to assess whether realized returns fall within the model's predicted confidence bands.
+
+## Risk Metrics
+At the 5-year horizon, the project computes:
+* Expected end price
+* Median end price
+* 5th and 95th percentiles
+* Probability of loss
+* Value-at-Risk (VaR)
+* Expected Shortfall (ES)
+Both log-payoff and simple-return risk measures are evaluated.
+
+## Outputs
+### Running:
+```bash
+python main.py
+```
+Produces:
+```bash
+outputs/
+  rolling_backtest.csv
+  backtest_summary.csv
+  simulation_metrics.csv
+  returns_descriptive_stats.csv
+  future_price_paths.png
+  log_daily_returns_hist.png
+  log_daily_returns_qq.png
+  horizon_end_prices_hist.png
+  horizon_logpayoff_scale_hist.png
+```
+All experiments are fully reproducible via a fixed random seed.
+
+## Project Structure
+```bash
+src/
+  data.py
+  returns.py
+  simulation.py
+  backtest.py
+  metrics.py
+  plots.py
+main.py
+outputs/
+```
+* `src/` contains modular, reusable components
+* `main.py` orchestrates the full pipeline
+* `outputs/` stores generated artifacts
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Reproducible](https://img.shields.io/badge/Experiments-Reproducible-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
