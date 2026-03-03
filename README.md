@@ -21,11 +21,15 @@ The target asset used in this study is Amazon (AMZN).
 ## Model Assumptions
 Daily log returns are modeled as:
 
-   $r_t = \ln(S_t/S_{t-1})$
+$$
+r_t = \ln\left(\frac{S_t}{S_{t-1}}\right)
+$$
 
 We assume: 
 
-   $r_t \sim \mathcal{N}(\mu, \sigma^2)$ (i.i.d.).
+$$
+r_t \sim \mathcal{N}(\mu, \sigma^2)(i.i.d.).
+$$
 
 Under the Geometric Brownian Motion (GBM) framework, this implies that future prices are lognormally distributed. 
 
