@@ -3,8 +3,14 @@
 </p>
 
 # Monte-Carlo-Stock-Simulator
-A reproducible Python project that builds and validates a Monte Carlo-based probabilistic forecasting system for equity prices using Geometric Brownian Motion(GBM).
+A reproducible Python project that builds and validates a Monte Carlo-based probabilistic forecasting system for equity prices using Geometric Brownian Motion (GBM).
 The project estimates the future distribution of stock prices over a 5-year horizon and evaluates model reliability via rolling-window backtesting and tail risk metrics.
+## Key Features
+* Vectorized Monte Carlo simulation of GBM price paths
+* Probabilistic forecasting of future equity price distributions
+* Rolling-window backtesting for model calibration
+* Tail risk analysis including Value-at-Risk (VaR) and Expected Shortfall (ES)
+* Fully reproducible experiments with fixed random seed
 ## Problem Statement
 The goal of this project is to:
 * Estimate the distribution of future stock prices
@@ -45,7 +51,7 @@ $\Delta t$ is $1/252$
 * Simulation paths: 1000
 * Random seed: 422
 * Monte Carlo engine implemented with vectorized Numpy operations
-* Two equivalent parameterizations tested (daily vs annualized) with numerical convergence check
+* Price paths simulated under a log-return GBM model
 
 ## Rolling Backtest
 A rolling-window backtest is implemented to evaluate model calibration:
@@ -104,6 +110,14 @@ outputs/
 * `src/` contains modular, reusable components
 * `main.py` orchestrates the full pipeline
 * `outputs/` stores generated artifacts
+
+## Requirements
+* Python >= 3.10
+* numpy
+* pandas
+* scipy
+* matplotlib
+* yfinance
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Reproducible](https://img.shields.io/badge/Experiments-Reproducible-green)

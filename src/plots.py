@@ -10,11 +10,27 @@ def hist_plot(df,
               log=False,
               save_path=None):
     """
-    Helper function to plot a histgram
-    :param df: Description
-    :param title: Description
-    :param xlabel: Description
-    :param ylabel: Description
+    Helper function to plot a histgram.
+
+    Parameters
+    ----------
+    df : pd.Series
+        A Series of log returns.
+    title : None
+        Title of the plot.
+    xlabel : None
+        x-axis label
+    ylabel : None
+        y-axis label
+    log : Boolean
+        If true, the x scale will be in log form.
+    save_path : str
+        An address to save the plot.
+    
+    Returns
+    -------
+    fig, ax : plt.subplots
+        Histgram plot
     """
     fig, ax = plt.subplots()
     ax.hist(
@@ -44,6 +60,30 @@ def qq_plot(
         xlabel=None,
         ylabel=None,
         save_path=None):
+    
+    """
+    Helper function to plot a QQ plot.
+
+    Parameters
+    ----------
+    df : pd.Series
+        A Series of log returns.
+    title : None
+        Title of the plot.
+    xlabel : None
+        x-axis label
+    ylabel : None
+        y-axis label
+    log : Boolean
+        If true, the x scale will be in log form.
+    save_path : str
+        An address to save the plot.
+    
+    Returns
+    -------
+    ax : stats.probplot
+        QQ plot
+    """
     ax = stats.probplot(
         df,
         dist="norm",
@@ -61,12 +101,19 @@ def qq_plot(
 
 
 def plot_future_price_paths(
-        mean_prices: np.ndarray,
-        median_prices: np.ndarray,
-        p05: np.ndarray,
-        p95: np.ndarray,
-        S0: np.ndarray,
-        save_path: str | None = None):
+        mean_prices,
+        median_prices,
+        p05,
+        p95,
+        S0,
+        save_path=None):
+    """
+    Plot future price paths
+
+    Parameters
+    ----------
+    mean_prices : np.ndarray
+    """
     days = np.arange(len(mean_prices))
     fig, ax = plt.subplots()
     ax.plot(days, mean_prices, label="mean")

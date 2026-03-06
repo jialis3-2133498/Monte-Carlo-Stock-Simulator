@@ -23,8 +23,9 @@ def monte_carlo_cumlog_paths(
     Returns
     -------
     cum_log_returns : np.ndarray
-        Simulated cumulative log returns with shape (horizon, n_sims).
-        Each column represents one simulated return path.
+        shape (horizon, n_sims)
+        Rows -> time steps
+        Cols -> simulation paths
 
     Notes
     -----
@@ -44,3 +45,22 @@ def monte_carlo_cumlog_paths(
     # Convert daily returns to cumulative log returns
     cum_log_returns = np.cumsum(simulated_daily_returns, axis=0)
     return cum_log_returns
+
+
+def monte_carlo_price_paths(
+        train_prices,
+        train_returns,
+        horizon,
+        n_sims=1000,
+        seed=422):
+    S_0 = train_prices.iloc[-1]
+    cum_log_returns = monte_carlo_cumlog_paths(
+        train_returns=train_returns,
+        horizon=horizon,
+        n_sims=n_sims,
+        seed=seed
+    )
+    price_paths = np.empty((horizon+1, n_sims))
+    price_paths[0, :] = S_0
+    price_paths[1:, :] = S_0 * np.exp(cum_log_returns)
+    return price_paths

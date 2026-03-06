@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import stats
 import os
 
 from src.data import access_stock_price
@@ -7,6 +6,7 @@ from src.returns import calculate_log_daily_returns
 from src.backtest import rolling_backtest
 from src.plots import hist_plot, qq_plot, plot_future_price_paths
 from src.metrics import compute_payoffs, summarize_horizon_metrics
+from src.simulation import monte_carlo_price_paths
 
 
 def main():
@@ -42,8 +42,6 @@ def main():
 
     # ================ Rolling Backtest ================
     # Perform a Rolling Backtest on 2020-2026 data
-    mu_hat = train_r.mean()
-    sigma_hat = train_r.std(ddof=0)
     bt = rolling_backtest(
         prices.loc[START:BACKTEST_END], window=756, horizon=63, step=21)
     summary = bt[["coverage", "ave_width"]].iloc[0].to_frame().T
@@ -52,36 +50,20 @@ def main():
     # ================ Simulation ================
     # Model A: daily-log-return GBM (Euler exact in log space)
     T = 1260  # Simulate the price in the future 1260 days
-    N = 1000  # For each day, we will simulate 1000 times/paths
-    S_0 = train_prices.iloc[-1]  # The last close price in our dataset
+    N = 1000  # For each day, we will simulate 1000 paths/day
+    S_0 = train_prices.iloc[-1]
+    S_T_daily_para_sim = monte_carlo_price_paths(
+        train_prices=train_prices,
+        train_returns=train_r,
+        horizon=T,
+        n_sims=N,
+        seed=SEED)
 
-    # standard shock for adding volatility
-    Z = stats.norm.rvs(size=(N, T), random_state=SEED)
-    logret_daily_monte_sim = mu_hat + sigma_hat * Z
-    cum_logret_daily_monte_sim = np.cumsum(logret_daily_monte_sim, axis=1)
-    S_T_daily_para_sim = np.empty((N, T+1))
-    S_T_daily_para_sim[:, 0] = S_0
-
-    # Future 5 years prices, 1000 paths for each day
-    S_T_daily_para_sim[:, 1:] = S_0 * np.exp(cum_logret_daily_monte_sim)
-
-    # Model B: same model as A but expressed via annualized parameters
-    dt = 1/252
-    mu_drift_ann = mu_hat / dt
-    sigma_ann = sigma_hat / np.sqrt(dt)
-    logret_ann_sim = mu_drift_ann * dt + sigma_ann * np.sqrt(dt) * Z
-    cum_logret_ann_monte_sim = np.cumsum(logret_ann_sim, axis=1)
-    S_T_ann_para_sim = np.empty((N, T+1))
-    S_T_ann_para_sim[:, 0] = S_0
-    S_T_ann_para_sim[:, 1:] = S_0 * np.exp(cum_logret_ann_monte_sim)
-
-    mean_prices = S_T_ann_para_sim.mean(axis=0)
-    median_prices = np.median(S_T_ann_para_sim, axis=0)
-    p05 = np.percentile(S_T_ann_para_sim, 5, axis=0)
-    p95 = np.percentile(S_T_ann_para_sim, 95, axis=0)
-    # Check Model A and Model B's convergence
-    print(
-        "Max abs diff:", np.max(np.abs(S_T_daily_para_sim - S_T_ann_para_sim)))
+    # Summary statistics across simulation paths
+    mean_prices = S_T_daily_para_sim.mean(axis=1)
+    median_prices = np.median(S_T_daily_para_sim, axis=1)
+    p05 = np.percentile(S_T_daily_para_sim, 5, axis=1)
+    p95 = np.percentile(S_T_daily_para_sim, 95, axis=1)
 
     # mean_prices vs. median_prices
     plot_future_price_paths(
@@ -93,7 +75,7 @@ def main():
         save_path="outputs/future_price_paths.png"
     )
     # End-of-horizon metrics
-    end_prices = S_T_ann_para_sim[:, -1]  # Last day simulated prices
+    end_prices = S_T_daily_para_sim[:, -1]  # Last day simulated prices
     log_payoff, _ = compute_payoffs(end_prices, S_0)
 
     # Visualize Horizon payoff and prices
