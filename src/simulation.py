@@ -15,9 +15,9 @@ def monte_carlo_cumlog_paths(
         Historical log returns used to estimate model parameters.
     horizon : int
         Number of days to simulate into the future.
-    n_sims : int
+    n_sims : int, default=1000
         Number of Monte Carlo simulation paths.
-    seed : int
+    seed : int, default=422
         Random seed for reproducibility.
 
     Returns
@@ -32,7 +32,7 @@ def monte_carlo_cumlog_paths(
     Assumes daily log returns follow a normal distribution:
         r_t ~ N(mu, sigma)
     """
-    # Create a random number generator object
+    # Initialize a random number generator object
     rng = np.random.default_rng(seed)
     # Estimate mean and volatility from training returns (MLE)
     mu = train_returns.mean()
@@ -53,6 +53,34 @@ def monte_carlo_price_paths(
         horizon,
         n_sims=1000,
         seed=422):
+    """
+    Simulate Monte Carlo paths for future stock prices
+
+    Parameters
+    ---------
+    train_prices : pd.Series
+        Historical price series used to obtain the last observed price S_0.
+    train_returns : pd.Series
+        Historical log returns used to estimate model parameters.
+    horizon : int
+        Number of trading days to simulate into the future.
+    n_sims : int, default=1000
+        Number of Monte Carlo simulation paths.
+    seed : int, default=422
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    price_paths : nd.ndarray
+        Simulated price paths with shape (horizon + 1, n_sims).
+        Rows -> time steps (t=0,....,horizon)
+        Cols -> simulation paths
+        The first row contains the last observed price S_0.
+
+    Notes
+    -----
+    Price dynamics: S_t = S_0 * exp(cumulative_log_return)
+    """
     S_0 = train_prices.iloc[-1]
     cum_log_returns = monte_carlo_cumlog_paths(
         train_returns=train_returns,
