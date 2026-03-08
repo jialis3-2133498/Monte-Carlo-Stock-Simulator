@@ -84,15 +84,15 @@ For each simulation path, cumulative log returns are calculated by summing the s
 
 By repeating this process for many independent simulation paths, the Monte Carlo approach produces a distribution of possible future stock prices. This distribution allows us to analyze potential future outcomes and evaluate risk metrics such as Value-at-Risk (VaR) and Expected Shortfall (ES).
 
-1000 simulation paths are generated over a horizon of 1260 trading days, corresponding to approximately five years of future price evolution.
+A total of 1000 simulation paths are generated over a horizon of 1260 trading days, corresponding to approximately five years of future price evolution.
 
 <p align="center">
   <img src="outputs/future_price_paths.png" width="700">
 </p>
 
-*Figure 3: Monte Carlo simulated future price distribution for Amazon stock under the GBM model. The shaded region represents the 5-95% prediction interval across simulation paths. The black line shows the observed stock price trajectory from 2025-2026*
+*Figure 3: Monte Carlo simulated future price distribution for Amazon stock under the GBM model. The blue and orange lines represent the mean and median simulated price paths. The shaded region represents the 5-95% prediction interval across simulation paths. The black line shows the observed stock price trajectory from 2025-2026.*
 
-The observed price trajectory from 2025 to 2026 is overlaid on the simulated distribution for comparison. Although the realized path is only partially observed, it remains within the simulated 5-95% prediction interval. This suggests that the model captures a plausible range of future outcomes under the estimated parameters. However, the observed path fluctuates differently from the simulated central tendency, reflecting the unpredictable nature of real market dynamics.
+The observed price trajectory from 2025 to 2026 is overlaid on the simulated distribution for comparison. Although the realized path is only partially observed, it remains within the simulated 5-95% prediction interval. This suggests that the model captures a plausible range of potential future outcomes under the estimated parameters. However, the observed path fluctuates differently from the simulated central tendency, reflecting the unpredictable nature of real market dynamics.
 
 ## 5. Risk Distribution
 <p align="center">
@@ -115,6 +115,7 @@ The observed price trajectory from 2025 to 2026 is overlaid on the simulated dis
 ## 9. Limitations
 
 ## 10. Conclusion
+
 
 
 
