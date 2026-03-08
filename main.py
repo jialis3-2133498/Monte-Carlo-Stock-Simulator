@@ -8,6 +8,7 @@ from src.backtest import rolling_backtest
 from src.plots import hist_plot, qq_plot, plot_future_price_paths
 from src.plots import plot_backtest_prediction_vs_actual_returns
 from src.plots import plot_rolling_volatility, plot_backtest_interval_width
+from src.plots import plot_csv_table
 from src.metrics import compute_payoffs, summarize_horizon_metrics
 from src.simulation import monte_carlo_price_paths
 
@@ -27,6 +28,10 @@ def main():
     descriptive_data = train_r.describe()
     descriptive_data.to_frame(
         name="log_return").to_csv("outputs/returns_descriptive_stats.csv")
+    plot_csv_table(
+        "outputs/returns_descriptive_stats.csv",
+        "outputs/returns_descriptive_stats.png"
+    )
     # Plot the Histogram of the Log Daily Returns
     hist_plot(
         data=train_r,

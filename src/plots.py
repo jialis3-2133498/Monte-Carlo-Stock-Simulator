@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from scipy import stats
 import numpy as np
+import pandas as pd
 
 
 def hist_plot(
@@ -314,4 +315,41 @@ def plot_rolling_volatility(
         plt.close(fig)
     else:
         plt.show()
+    return fig, ax
+
+
+def plot_csv_table(
+        path,
+        save_path):
+    df = pd.read_csv(path)
+    if "Unnamed: 0" in df.columns:
+        df = df.rename(columns={"Unnamed: 0": "Statistic"})
+    for i in range(len(df)):
+        value = float(df.iloc[i, 1])
+        if df.iloc[i, 0] == "count":
+            df.iloc[i, 1] = int(value)
+        else:
+            df.iloc[i, 1] = f"{value:.6f}"
+    fig, ax = plt.subplots(figsize=(8, 3.8))
+    ax.axis("off")
+    table = ax.table(
+        cellText=df.values,
+        colLabels=df.columns,
+        cellLoc="center",
+        loc="center"
+    )
+    table.scale(1.1, 1.6)
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("black")
+        cell.set_linewidth(0.8)
+        if row == 0:
+            cell.set_text_props(weight="bold")
+        if col == 0 and row > 0:
+            cell.set_text_props(weight="bold")
+    fig.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+
     return fig, ax
