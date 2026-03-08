@@ -105,6 +105,8 @@ def qq_plot(
 
 
 def plot_future_price_paths(
+        real_prices,
+        real_prices_label,
         mean_prices,
         median_prices,
         p05,
@@ -116,6 +118,10 @@ def plot_future_price_paths(
 
     Parameters
     ----------
+    real_prices : np.Series
+        Real market values
+    real_prices_label : str
+        Label for the real market values
     mean_prices : np.ndarray
         Mean simulated price at each time step.
     median_prices : np.ndarray
@@ -139,6 +145,12 @@ def plot_future_price_paths(
     fig, ax = plt.subplots(figsize=(12, 7))
     ax.plot(days, mean_prices, label="Mean path", linewidth=2)
     ax.plot(days, median_prices, label="Median path", linewidth=2)
+    ax.plot(
+        real_prices.values,
+        color="black",
+        linewidth=2.5,
+        zorder=10,
+        label=real_prices_label)
     ax.fill_between(days, p05, p95, alpha=0.2, label="5-95% band")
     ax.set_yscale("log")
     ax.set_xlabel("Day")

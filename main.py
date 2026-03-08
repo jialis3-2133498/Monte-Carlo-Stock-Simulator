@@ -23,6 +23,7 @@ def main():
     SEED = 422
     os.makedirs("outputs", exist_ok=True)
     prices = access_stock_price(TICKER, START, END, "1d")
+    prices_2025_2026 = prices["2025":"2026"]
     train_prices = prices.loc[: TRAIN_END]
     train_r = calculate_log_daily_returns(train_prices)
     descriptive_data = train_r.describe()
@@ -84,6 +85,8 @@ def main():
 
     # mean_prices vs. median_prices
     plot_future_price_paths(
+        real_prices=prices_2025_2026,
+        real_prices_label="2025-2026 Observed Prices",
         mean_prices=mean_prices,
         median_prices=median_prices,
         p05=p05,
