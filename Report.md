@@ -22,7 +22,11 @@ Our target asset in this study is Amazon (AMZN). Historical stock price data are
 
 Based on the adjusted closing prices, we compute daily log returns, which are commonly used in financial modeling due to their desirable statistical properties, including time additivity.
 
-![Descriptive statistics](outputs/returns_descriptive_stats.png)
+
+<p align="center">
+  <img src="outputs/returns_descriptive_stats.png" width="700">
+</p>
+
 *Table 1: Descriptive statistics of daily log returns.*
 
 The mean daily log return is approximately 0.00067, while the standard deviation is about 0.02265, indicating that short-term price movements are primarily driven by volatility rather than average drift. These estimated parameters are later used in the Monte Carlo simulation. 
@@ -68,5 +72,6 @@ The distribution also exhibits several extreme observations in the tails, which 
 ## 9. Limitations
 
 ## 10. Conclusion
+
 
 
