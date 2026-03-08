@@ -18,9 +18,28 @@ To address this, the Geometric Brownian Motion (GBM) framework provides a mathem
 In this project, we implement a Monte Carlo simulation to model the future price behavior of Amazon (AMZN) stock and evaluate its risk characteristics, including Value-at-Risk (VaR) and Expected Shortfall (ES). 
 
 ## 2. Data
-Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to the most recent available date. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
+Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to the most recent available trading date. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
 
 Based on the adjusted closing prices, we compute daily log returns, which are commonly used in financial modeling due to their desirable statistical properties, including time additivity.
+
+
+<p align="center">
+  <img src="outputs/returns_descriptive_stats.png" width="700">
+</p>
+
+*Table 1: Descriptive statistics of daily log returns.*
+
+The mean daily log return is approximately 0.00067, while the standard deviation is about 0.02265, indicating that short-term price movements are primarily driven by volatility rather than average drift. These estimated parameters are later used in the Monte Carlo simulation. 
+
+
+<p align="center">
+  <img src="outputs/log_daily_returns_hist.png" width="700">
+</p>
+
+*Figure 1: Distribution of Amazon Daily Log Returns*
+The histogram indicates that the distribution of daily log returns is approximately symmetric and centered around zero, which is broadly consistent with the normality assumption used in the Geometric Brownian Motion framework.
+
+The distribution also exhibits several extreme observations in the tails, which reflects the presence of occasional large market movements.
 
 ## 3. Model
 
@@ -53,4 +72,6 @@ Based on the adjusted closing prices, we compute daily log returns, which are co
 ## 9. Limitations
 
 ## 10. Conclusion
+
+
 
