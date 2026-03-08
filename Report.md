@@ -5,7 +5,7 @@
 - **Model:** Geometric Brownian Motion (GBM), Monte Carlo Simulation, Maximum Likelihood Estimation
 - **Forecast Horizon:** 5 years (1260 trading days)
 - **Simulation Paths:** 1000
-- **Backtest:** Rolling window (756-day training, 63-day horizon)
+- **Backtest:** Rolling window (756-day training, 63-day testing, 21-day step)
 - **Risk Metrics:** Value-at-Risk (VaR), Expected Shortfall (ES)
 
 ## 1. Introduction
@@ -94,7 +94,7 @@ A total of 1000 simulation paths are generated over a horizon of 1260 trading da
 
 The observed price trajectory from 2025 to 2026 is overlaid on the simulated distribution for comparison. Although the realized path is only partially observed, it remains within the simulated 5-95% prediction interval. This suggests that the model captures a plausible range of potential future outcomes under the estimated parameters. However, the observed path fluctuates differently from the simulated central tendency, reflecting the unpredictable nature of real market dynamics.
 
-## 5. Risk Distribution
+## 5. Risk Distribution and Risk Metrics
 <p align="center">
   <img src="outputs/horizon_end_prices_hist.png" width="700">
 </p>
@@ -104,17 +104,15 @@ The observed price trajectory from 2025 to 2026 is overlaid on the simulated dis
   <img src="outputs/backtest_simulated_returns_vs_actual_returns.png" width="700">
 </p>
 
-## 7. Model Diagnostics
+## 7. Limitation
 <p align="center">
   <img src="outputs/rolling_volatility.png" width="700">
 </p>
 
 
-## 8. Risk Metrics
+## 8. Conclusion
 
-## 9. Limitations
 
-## 10. Conclusion
 
 
 
