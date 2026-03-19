@@ -98,6 +98,8 @@ The observed price trajectory from 2025 to 2026 is overlaid on the simulated dis
 <p align="center">
   <img src="outputs/horizon_end_prices_hist.png" width="700">
 </p>
+At the end of the simulation horizon, each Monte Carlo path produces a possible terminal stock price and corresponding return. Taken together, these simulated outcomes from an empirical distribution of future prices and losses. This distribution provides a convenient basis for summarizing downside risk, including the probability of loss, Value-at-Risk (VaR), and Expected Shortfall (ES).
+To evaluate downside risk, we compute both return-based and price-based summaries. In particular, we examine the probability that the ending price falls below the initial price, as well as tail-risk measures derived from the simulated return distribution.
 
 ## 6. Rolling Backtest
 <p align="center">
