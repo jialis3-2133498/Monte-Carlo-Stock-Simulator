@@ -109,18 +109,19 @@ def summarize_horizon_metrics(
     var_log, es_log = compute_var_es(log_payoff, alpha=alpha)
     var_simple, es_simple = compute_var_es(simple_return, alpha=alpha)
     metrics = {
-        "S0": float(S0),
-        "mean_end_price": float(end_prices.mean()),
-        "median_end_price": float(np.median(end_prices)),
-        "p05_end_price": float(np.percentile(end_prices, 5)),
-        "p95_end_price": float(np.percentile(end_prices, 95)),
-        "prob_end_price_below_S0": float((end_prices < S0).mean()),
-        "prob_loss_log": float((log_payoff < 0).mean()),
-        "prob_loss_simple": float((simple_return < 0).mean()),
+        "S0": np.round(float(S0), 2),
+        "Mean": np.round(float(end_prices.mean()), 2),
+        "Median": np.round(float(np.median(end_prices)), 2),
+        "5th pct": float(np.round(np.percentile(end_prices, 5), 2)),
+        "95th pct": float(np.round(np.percentile(end_prices, 95), 2)),
+        "Prob(ST < S0)": np.round(
+            float((end_prices < S0).mean()), 2),
+        "Log_loss": np.round(float((log_payoff < 0).mean()), 2),
+        "Simp_loss": np.round(float((simple_return < 0).mean()), 2),
         "alpha": float(alpha),
-        "VaR_log": float(var_log),
-        "ES_log": float(es_log),
-        "VaR_simple": float(var_simple),
-        "ES_simple": float(es_simple),
+        "VaR_log": np.round(float(var_log), 2),
+        "ES_log": np.round(float(es_log), 2),
+        "VaR_simp": np.round(float(var_simple), 2),
+        "ES_simp": np.round(float(es_simple), 2),
     }
     return pd.DataFrame([metrics])

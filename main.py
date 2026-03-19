@@ -26,9 +26,24 @@ def main():
     prices_2025_2026 = prices["2025":"2026"]
     train_prices = prices.loc[: TRAIN_END]
     train_r = calculate_log_daily_returns(train_prices)
-    descriptive_data = train_r.describe()
-    descriptive_data.to_frame(
-        name="log_return").to_csv("outputs/returns_descriptive_stats.csv")
+    descriptive_data = train_r.describe().to_frame().T
+    descriptive_data = descriptive_data.rename(
+        columns={
+            "count": "Count",
+            "mean": "Mean",
+            "std": "Std Dev",
+            "min": "Min",
+            "25%": "Q1",
+            "50%": "Median",
+            "75%": "Q3",
+            "max": "Max"
+        }
+    )
+    descriptive_data["Count"] = descriptive_data["Count"].round(0).astype(int)
+    for col in ["Mean", "Std Dev", "Min", "Q1", "Median", "Q3", "Max"]:
+        descriptive_data[col] = descriptive_data[col].round(6)
+    descriptive_data.to_csv(
+        "outputs/returns_descriptive_stats.csv", index=False)
     plot_csv_table(
         "outputs/returns_descriptive_stats.csv",
         "outputs/returns_descriptive_stats.png"
@@ -135,6 +150,10 @@ def main():
         alpha=0.05)
     backtest_df.to_csv("outputs/rolling_backtest.csv", index=False)
     results_df.to_csv("outputs/simulation_metrics.csv", index=False)
+    plot_csv_table(
+        "outputs/simulation_metrics.csv",
+        "outputs/simulation_metrics.png"
+    )
     print("Results saved to outputs folder.")
 
     print("Backtest summary:")

@@ -342,7 +342,7 @@ def plot_csv_table(
             df.iloc[i, 1] = int(value)
         else:
             df.iloc[i, 1] = f"{value:.6f}"
-    fig, ax = plt.subplots(figsize=(8, 3.8))
+    fig, ax = plt.subplots(figsize=(10, 3.8))
     ax.axis("off")
     table = ax.table(
         cellText=df.values,
@@ -350,9 +350,10 @@ def plot_csv_table(
         cellLoc="center",
         loc="center"
     )
-    table.scale(1.1, 1.6)
+    table.scale(1.5, 2)
     table.auto_set_font_size(False)
     table.set_fontsize(11)
+    table.auto_set_column_width(col=list(range(len(df.columns))))
     for (row, col), cell in table.get_celld().items():
         cell.set_edgecolor("black")
         cell.set_linewidth(0.8)
@@ -360,8 +361,7 @@ def plot_csv_table(
             cell.set_text_props(weight="bold")
         if col == 0 and row > 0:
             cell.set_text_props(weight="bold")
-    fig.tight_layout()
-    fig.savefig(save_path, bbox_inches="tight")
+    fig.savefig(save_path, bbox_inches='tight')
     plt.close(fig)
 
     return fig, ax
