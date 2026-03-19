@@ -359,8 +359,6 @@ def plot_csv_table(
         cell.set_linewidth(0.8)
         if row == 0:
             cell.set_text_props(weight="bold")
-        if col == 0 and row > 0:
-            cell.set_text_props(weight="bold")
     fig.savefig(save_path, bbox_inches='tight')
     plt.close(fig)
 
