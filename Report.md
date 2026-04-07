@@ -18,7 +18,7 @@ To address this, the Geometric Brownian Motion (GBM) framework provides a mathem
 In this project, we implement a Monte Carlo simulation to model the future price behavior of Amazon (AMZN) stock and evaluate its risk characteristics, including Value-at-Risk (VaR) and Expected Shortfall (ES). 
 
 ## 2. Data
-Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to the most recent available trading date. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
+Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to January 1, 2025, with later data used for backtesting and comparison against realized outcomes. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
 
 Based on the adjusted closing prices, we compute daily log returns, which are commonly used in financial modeling due to their desirable statistical properties, including time additivity.
 
@@ -132,17 +132,53 @@ To summarize tail risk more formally, we compute Value-at-Risk (VaR) and Expecte
 These results show that although the simulated distribution has substantial upside potential, the left tail remains important. In other words, the model produces a favorable central tendency but also implies that extreme downside outcomes can be severe when they occur.
 
 ## 6. Rolling Backtest
+
+Rolling backtesting is used to evaluate whether the simulation model produces reasonable forecast intervals when applied repeatedly over time, rather than only for a single estimation period. This helps assess whether the model has practical predictive value under changing market conditions.
+
+In this project, a rolling-window procedure is implemented using a 756-trading-day training window, a 63-trading-day forecast horizon, and a 21-trading-day step size. For each rolling iteration, the model parameters are re-estimated from the training window, and a Monte Carlo simulation is used to generate a distribution of cumulative returns over the next 63 trading days. The 5th and 95th percentiles of the simulated return distribution are then compared with the realized cumulative return over the same future horizon.
+
 <p align="center">
   <img src="outputs/backtest_simulated_returns_vs_actual_returns.png" width="700">
 </p>
 
-## 7. Limitation
+*Figure 6: Rolling backtest comparing realized cumulative returns with the simulated 5-95% prediction interval over repeated forecast windows.*
+
+Figure 6 shows that the realized cumulative returns often remain within the simulated 5-95% prediction interval, although some deviations occur during periods of heightened market volatility. This suggests that the model captures the broad range of likely short-term outcomes, even if it does not perfectly track the exact realized path.
+
+The rolling backtest is useful because it evaluates the model in a more realistic forecasting setting. Rather than fitting the model once and judging it only from a single outcome, rolling evaluation repeatedly asks whether realized returns remain plausible under the simulated distribution. In that sense, the backtest provides evidence that the GBM-based Monte Carlo framework offers a reasonable first-order approximation for return uncertainty, while also revealing where the model may struggle during more turbulent periods.
+
+## 7. Limitations
+
+Although the GBM-based Monte Carlo framework is mathematically convenient and interpretable, it has several important limitations.
+
+First, the model assumes that daily log returns are independently and identically distributed and approximately normal. As shown earlier in the histogram and Q-Q plot, Amazon's historical returns exhibit occasional extreme observations and fat tails, which are not fully captured by the normality assumption. As a result, the model may underestimate the likelihood of unusually large market moves.
+
+Second, the model assumes constant drift and constant volatility over time. In reality, financial markets often experience changing regimes, where volatility rises during crises and falls during calmer periods. The rolling volatility plot below illustrates that Amazon's historical volatility is not stable over time.
+
 <p align="center">
   <img src="outputs/rolling_volatility.png" width="700">
 </p>
 
+*Figure 7: Rolling annualized volatility of Amazon daily log returns.*
+
+Figure 7 shows a clear time variation in volatility, with periods of elevated uncertainty followed by more stable intervals. This pattern is inconsistent with the constant-volatility assumption embedded in standard GBM. Because volatility clustering is common in financial data, a constant-parameter model may fail to fully reflect changing market risk conditions.
+
+Third, the model does not incorporate firm-specific news, macroeconomic shocks, interest rate changes, or structural breaks. All future uncertainty is represented through random shocks drawn from a fixed distribution estimated from historical data. This makes the model useful for illustrating probabilistic outcomes, but less suitable for capturing sudden changes in economic conditions.
+
+Finally, the backtest only evaluates whether realized returns fall within the simulated range, rather than testing more advanced forecast calibration measures. A more comprehensive study could assess interval coverage rates more formally, compare multiple models, or use alternative stochastic processes such as jump-diffusion models, stochastic volatility models, or GARCH-type specifications.
+
+Overall, these limitations suggest that the current model should be interpreted as a baseline probabilistic framework rather than a fully realistic representation of stock price dynamics.
+
 
 ## 8. Conclusion
+
+This project developed a reproducible Monte Carlo simulation framework for modeling the future price behavior of Amazon stock under the Geometric Brownian Motion assumption. Using historical adjusted closing prices, daily log returns were calculated, model parameters were estimated, and 1000 future price paths were simulated over a five-year horizon.
+
+The simulation results show that the terminal price distribution is highly dispersed and right-skewed, with substantial upside potential but also meaningful downside risk. The estimated probability of ending below the initial price is approximately 15.6%, while the 5% Value-at-Risk and Expected Shortfall indicate that extreme losses, although relatively unlikely, can still be severe.
+
+The rolling backtest further shows that realized short-horizon returns generally fall within the model's simulated prediction interval, suggesting that the framework provides a reasonable first-order approximation of return uncertainty. At the same time, the analysis also highlights important limitations, especially the assumptions of normality, independence, and constant volatility. 
+
+Overall, this project demonstrates how Monte Carlo simulation can be used to translate historical return estimates into a full distribution of future price outcomes, making it a useful tool for probabilistic forecasting and risk analysis. While the model is intentionally simplified, it provides a strong baseline that could be extended in future work through more realistic volatility dynamics, heavier-tailed return distributions, or alternative stochastic processes.
 
 
 
