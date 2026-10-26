@@ -21,7 +21,7 @@ The target asset used in this study is Amazon (AMZN).
 ## Data
 * Source: `yfinance`
 * Estimation window: 01/01/2020 to 01/01/2025
-* Backtest window: 01/01/2020 to 12/31/2026
+* Backtest window: 01/01/2020 to 03/11/2026
 * Trading days per year: 252
 
 ## Model Assumptions
