@@ -1,4 +1,4 @@
-# Monte Carlo Stock Price Simulation with Rolling Backtest
+# Monte Carlo Equity Risk Analytics: GBM Simulation, Model Validation, and Volatility Sensitivity
 
 ## Project Summary
 
@@ -6,7 +6,9 @@
 - **Forecast Horizon:** 5 years (1260 trading days)
 - **Simulation Paths:** 1000
 - **Backtest:** Rolling window (756-day training, 63-day testing, 21-day step)
-- **Risk Metrics:** Value-at-Risk (VaR), Expected Shortfall (ES)
+- **Risk Metrics:** Value-at-Risk (VaR), Expected Shortfall (ES), probability of loss
+- **Analytics Stack:** Python, MySQL, SQL, and Tableau
+- **Scenario Analysis:** 1.0×, 1.5×, and 2.0× historical daily volatility
 
 ## 1. Introduction
 In financial markets, stock prices are influenced by many factors, including macroeconomic policies, geopolitical events, and firm-level performance. Modeling the future behavior of stock prices is therefore challenging due to the complexity and uncertainty of these influences.
@@ -18,7 +20,7 @@ To address this, the Geometric Brownian Motion (GBM) framework provides a mathem
 In this project, we implement a Monte Carlo simulation to model the future price behavior of Amazon (AMZN) stock and evaluate its risk characteristics, including Value-at-Risk (VaR) and Expected Shortfall (ES). 
 
 ## 2. Data
-Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to January 1, 2025, with later data used for backtesting and comparison against realized outcomes. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
+Our target asset in this study is Amazon (AMZN). Historical stock price data are obtained using the `yfinance` API, covering the period from January 1, 2020 to the most recent available trading date. In this project, we use the adjusted closing price, which accounts for corporate actions such as dividends and stock splits and therefore better reflects the true return of the asset.
 
 Based on the adjusted closing prices, we compute daily log returns, which are commonly used in financial modeling due to their desirable statistical properties, including time additivity.
 
@@ -26,7 +28,7 @@ Daily log returns are computed as:
 
 $$r_t = \ln\left(\frac{S_t}{S_{t-1}}\right)$$
 
-where $S_t$ and $S_{t-1}$ denote the adjusted closing prices at time $t$ and ${t-1}$.
+where $S_t$ and $S_{t-1}$ denote adjusted closing prices at times $t$ and $t-1$.
 
 <p align="center">
   <img src="outputs/returns_descriptive_stats.png" width="700">
@@ -43,7 +45,7 @@ The mean daily log return is approximately 0.00067, while the standard deviation
 
 *Figure 1: Distribution of Amazon Daily Log Returns*
 
-The histogram indicates that the distribution of daily log returns is approximately symmetric and centered around zero, which is broadly consistent with the normality assumption used in the Geometric Brownian Motion framework.
+The histogram indicates that the distribution of daily log returns is centered near zero, though visual symmetry alone does not establish the normality assumption used in the Geometric Brownian Motion framework.
 
 The distribution also exhibits several extreme observations in the tails, which reflect the presence of occasional large market movements.
 
@@ -55,7 +57,7 @@ The distribution also exhibits several extreme observations in the tails, which 
 
 The Q-Q plot suggests that the distribution of daily log returns is approximately normal in the central region, as most observations lie close to the 45-degree reference line. However, noticeable deviations appear in the extreme quantiles, indicating the presence of fat tails and occasional extreme return events. Such behavior is commonly observed in financial return series.
 
-Although financial returns often exhibit fat tails, the normality assumption provides a reasonable first-order approximation for modeling price dynamics under the Geometric Brownian Motion framework.
+Despite empirical tail deviations, the normality assumption provides a tractable baseline approximation for modeling price dynamics under the Geometric Brownian Motion framework.
 
 ## 3. Methodology
 In this project, the Geometric Brownian Motion (GBM) framework is used, and the stochastic continuous-time model is:
@@ -72,7 +74,7 @@ where
 
 $$Z_t \sim N(0,1)$$
 
-The discrete-time solution of the GBM process is used to simulate stock price paths. In this equation, $Z_t$ represents a standard normal random variable. At each time step, a random shock is drawn from the normal distribution and applied to the price dynamics. By repeatedly sampling these shocks, the Monte Carlo simulation generates multiple possible future price paths.
+The continuous-time specification above uses the price-process drift; the implemented simulation instead estimates the **daily mean of log returns** and simulates $r_t\sim\mathcal{N}(\mu_d,\sigma_d^2)$ directly. Accordingly, the $-\tfrac12\sigma^2$ adjustment is already implicit in the distinction between continuous-time price drift and log-return drift and must **not** be subtracted again from the estimated daily log-return mean. The discrete-time solution of the GBM process is used to simulate stock price paths. In this equation, $Z_t$ represents a standard normal random variable. At each time step, a random shock is drawn from the normal distribution and applied to the price dynamics. By repeatedly sampling these shocks, the Monte Carlo simulation generates multiple possible future price paths.
 
 The parameters $\mu$ and $\sigma$ are estimated from historical daily log returns and are used as inputs in the Monte Carlo simulation. 
 
@@ -92,7 +94,7 @@ A total of 1000 simulation paths are generated over a horizon of 1260 trading da
 
 *Figure 3: Monte Carlo simulated future price distribution for Amazon stock under the GBM model. The blue and orange lines represent the mean and median simulated price paths. The shaded region represents the 5-95% prediction interval across simulation paths. The black line shows the observed stock price trajectory from 2025-2026.*
 
-The observed price trajectory from 2025 to 2026 is overlaid on the simulated distribution for comparison. Although the realized path is only partially observed, it remains within the simulated 5-95% prediction interval. This suggests that the model captures a plausible range of potential future outcomes under the estimated parameters. However, the observed path fluctuates differently from the simulated central tendency, reflecting the unpredictable nature of real market dynamics.
+The observed price trajectory from 2025 to 2026 is overlaid on the simulated distribution for comparison. Although the realized path is only partially observed, it remains within the simulated 5-95% prediction interval. This is a descriptive comparison against one partial realized trajectory, not validation of five-year predictive accuracy. However, the observed path fluctuates differently from the simulated central tendency, reflecting the unpredictable nature of real market dynamics.
 
 ## 5. Risk Distribution and Risk Metrics
 
@@ -131,58 +133,72 @@ To summarize tail risk more formally, we compute Value-at-Risk (VaR) and Expecte
 
 These results show that although the simulated distribution has substantial upside potential, the left tail remains important. In other words, the model produces a favorable central tendency but also implies that extreme downside outcomes can be severe when they occur.
 
-## 6. Rolling Backtest
+## 6. Rolling Backtest and Model Validation
 
-Rolling backtesting is used to evaluate whether the simulation model produces reasonable forecast intervals when applied repeatedly over time, rather than only for a single estimation period. This helps assess whether the model has practical predictive value under changing market conditions.
+The rolling backtest uses 756 historical trading days for each training window, forecasts the following 63 trading days, and advances 21 trading days per iteration. For each window, the simulator re-estimates the daily log-return distribution and computes a nominal 90% prediction interval for the cumulative 63-day log return. Performance diagnostics include interval coverage, interval width, and the probability integral transform (PIT).
 
-In this project, a rolling-window procedure is implemented using a 756-trading-day training window, a 63-trading-day forecast horizon, and a 21-trading-day step size. For each rolling iteration, the model parameters are re-estimated from the training window, and a Monte Carlo simulation is used to generate a distribution of cumulative returns over the next 63 trading days. The 5th and 95th percentiles of the simulated return distribution are then compared with the realized cumulative return over the same future horizon.
+In the October 28, 2026 run, **42 of 43 windows** were inside the nominal 90% interval, yielding **97.67% observed coverage**. The sole exception was an **upside** breach in the test window **May 5–August 4, 2023**: realized cumulative log return of approximately **0.29418** slightly exceeded the simulated upper bound of **0.29304** (PIT **0.951**).
 
-<p align="center">
-  <img src="outputs/backtest_simulated_returns_vs_actual_returns.png" width="700">
-</p>
+<p align="center"><img src="outputs/backtest_simulated_returns_vs_actual_returns.png" width="700"></p>
 
-*Figure 6: Rolling backtest comparing realized cumulative returns with the simulated 5-95% prediction interval over repeated forecast windows.*
+*Figure 6: Rolling simulated interval bounds compared with realized cumulative log returns.*
 
-Figure 6 shows that the realized cumulative returns often remain within the simulated 5-95% prediction interval, although some deviations occur during periods of heightened market volatility. This suggests that the model captures the broad range of likely short-term outcomes, even if it does not perfectly track the exact realized path.
+<p align="center"><img src="outputs/backtest_interval_width.png" width="700"></p>
 
-The rolling backtest is useful because it evaluates the model in a more realistic forecasting setting. Rather than fitting the model once and judging it only from a single outcome, rolling evaluation repeatedly asks whether realized returns remain plausible under the simulated distribution. In that sense, the backtest provides evidence that the GBM-based Monte Carlo framework offers a reasonable first-order approximation for return uncertainty, while also revealing where the model may struggle during more turbulent periods.
+*Figure 7: Rolling 90% interval width over the evaluation period.*
 
-## 7. Limitations
+Because the backtest horizons overlap (63-day horizons, 21-day steps), coverage observations are correlated. A 97.67% realized coverage rate is higher than the nominal 90%, but it is not sufficient to conclude that the model is statistically well calibrated or appropriately sharp. Coverage should be considered jointly with interval width and PIT patterns.
 
-Although the GBM-based Monte Carlo framework is mathematically convenient and interpretable, it has several important limitations.
+## 7. SQL Analytics and Data Pipeline
 
-First, the model assumes that daily log returns are independently and identically distributed and approximately normal. As shown earlier in the histogram and Q-Q plot, Amazon's historical returns exhibit occasional extreme observations and fat tails, which are not fully captured by the normality assumption. As a result, the model may underestimate the likelihood of unusually large market moves.
+To extend a Python-only simulation into a reproducible analytics workflow, the project uses Python-to-MySQL ETL with parameterized insert/upsert operations. Six reporting tables store historical prices, run metadata, daily simulation price summaries, horizon metrics, rolling-backtest results, and volatility-scenario outcomes.
 
-Second, the model assumes constant drift and constant volatility over time. In reality, financial markets often experience changing regimes, where volatility rises during crises and falls during calmer periods. The rolling volatility plot below illustrates that Amazon's historical volatility is not stable over time.
+The reporting layer uses SQL views such as `vw_forecast_summary`, `vw_risk_metrics`, `vw_backtest_annual`, `vw_backtest_detail`, and `vw_scenario_comparison`. These views isolate dashboard-ready aggregation and formatting logic from the Python simulation code. Repeated runs update existing keys rather than duplicating records. This architecture separates **model computation (Python)**, **persisted analysis and query logic (MySQL/SQL)**, and **presentation (Tableau)**.
 
-<p align="center">
-  <img src="outputs/rolling_volatility.png" width="700">
-</p>
+The dashboard work consists of two complementary analyses: (1) an equity-risk and model-validation view featuring baseline KPI metrics, a five-year forecast envelope, annual calibration, and exception drilldown; and (2) a volatility stress and risk-sensitivity view comparing scenario loss probability and tail-risk magnitudes. The live MySQL workbook is a local development asset; any Tableau Public publication requires a separate supported public-data publishing path.
 
-*Figure 7: Rolling annualized volatility of Amazon daily log returns.*
+## 8. Volatility Scenario Analysis
 
-Figure 7 shows a clear time variation in volatility, with periods of elevated uncertainty followed by more stable intervals. This pattern is inconsistent with the constant-volatility assumption embedded in standard GBM. Because volatility clustering is common in financial data, a constant-parameter model may fail to fully reflect changing market risk conditions.
+### 8.1 Experimental design
 
-Third, the model does not incorporate firm-specific news, macroeconomic shocks, interest rate changes, or structural breaks. All future uncertainty is represented through random shocks drawn from a fixed distribution estimated from historical data. This makes the model useful for illustrating probabilistic outcomes, but less suitable for capturing sudden changes in economic conditions.
+A controlled volatility sensitivity experiment scales the MLE daily log-return standard deviation while holding its historical daily mean, starting price, simulation horizon (1,260 trading days), number of paths (1,000), and random seed (422) constant. Three volatility multipliers are tested: **1.0×**, **1.5×**, and **2.0×**. Using the same seed makes the scenario paths share the same underlying sequence of standard-normal draws, limiting simulation noise in comparisons.
 
-Finally, the backtest only evaluates whether realized returns fall within the simulated range, rather than testing more advanced forecast calibration measures. A more comprehensive study could assess interval coverage rates more formally, compare multiple models, or use alternative stochastic processes such as jump-diffusion models, stochastic volatility models, or GARCH-type specifications.
+These scenarios do not represent empirically estimated probabilities of future volatility regimes. Nor does scaling the volatility parameter alone capture a full market crash, return jumps, leverage effects, or changing expected returns.
 
-Overall, these limitations suggest that the current model should be interpreted as a baseline probabilistic framework rather than a fully realistic representation of stock price dynamics.
+### 8.2 Scenario outcomes
 
+| Metric | Base (1.0×) | High Volatility (1.5×) | Stress (2.0×) |
+|---|---:|---:|---:|
+| Daily volatility | 2.2643% | 3.3964% | 4.5286% |
+| Mean terminal price | $683.23 | $980.93 | $1,591.58 |
+| Median terminal price | $499.55 | $495.28 | $491.05 |
+| 5th percentile terminal price | $133.76 | $68.63 | $35.21 |
+| 95th percentile terminal price | $1,790.02 | $3,359.46 | $6,304.95 |
+| Probability of loss | 15.60% | 24.70% | 30.60% |
+| 5% VaR, simple return | −39.03% | −68.72% | −83.95% |
+| 5% ES, simple return | −57.90% | −81.56% | −91.81% |
 
-## 8. Conclusion
+**Finding 1 — Downside exposure grows:** The modeled probability of a negative five-year return increases by **15.0 percentage points**, from 15.6% at baseline to 30.6% at 2× volatility. The worst-tail average return (5% ES) falls from −57.90% to −91.81%.
 
-This project developed a reproducible Monte Carlo simulation framework for modeling the future price behavior of Amazon stock under the Geometric Brownian Motion assumption. Using historical adjusted closing prices, daily log returns were calculated, model parameters were estimated, and 1000 future price paths were simulated over a five-year horizon.
+**Finding 2 — Mean return can be misleading:** The terminal price mean increases sharply with volatility even though the median remains around $500. This reflects the convexity of the exponential transformation under a fixed daily mean of log returns: the growing right tail increases the arithmetic mean, while left-tail outcomes deteriorate. Mean terminal price is not a sufficient risk summary.
 
-The simulation results show that the terminal price distribution is highly dispersed and right-skewed, with substantial upside potential but also meaningful downside risk. The estimated probability of ending below the initial price is approximately 15.6%, while the 5% Value-at-Risk and Expected Shortfall indicate that extreme losses, although relatively unlikely, can still be severe.
+**Finding 3 — Scenario analysis informs risk discussion, not investment certainty:** The findings motivate comparing downside metrics with central tendencies, but their magnitudes depend heavily on distribution assumptions and the fixed log-drift design.
 
-The rolling backtest further shows that realized short-horizon returns generally fall within the model's simulated prediction interval, suggesting that the framework provides a reasonable first-order approximation of return uncertainty. At the same time, the analysis also highlights important limitations, especially the assumptions of normality, independence, and constant volatility. 
+## 9. Limitations and Reliability
 
-Overall, this project demonstrates how Monte Carlo simulation can be used to translate historical return estimates into a full distribution of future price outcomes, making it a useful tool for probabilistic forecasting and risk analysis. While the model is intentionally simplified, it provides a strong baseline that could be extended in future work through more realistic volatility dynamics, heavier-tailed return distributions, or alternative stochastic processes.
+<p align="center"><img src="outputs/rolling_volatility.png" width="700"></p>
 
+*Figure 8: Historical rolling volatility illustrates that volatility is not constant across market periods.*
 
+1. **Distribution assumptions:** Independent Gaussian daily log returns do not model the heavy tails evident in the Q-Q plot, jumps, autocorrelation in squared returns, or volatility clustering.
+2. **Parameter uncertainty:** Fixed-window estimates from 2020–2024 are treated as known throughout the five-year forecast. Macroeconomic and company-specific changes may invalidate those estimates.
+3. **Backtesting dependence:** Overlapping 63-day evaluation windows make interval outcomes non-independent; observed coverage lacks a formal confidence interval and is not an unbiased guarantee of future performance.
+4. **Monte Carlo precision:** With 1,000 paths, estimates near the 5% tail depend on relatively few observations. Additional simulation paths and uncertainty bands would improve reliability.
+5. **Stress design:** Fixed daily log-return mean plus increased volatility increases arithmetic expected prices via lognormal convexity; this is a modeling artifact of the controlled experiment, not a claim that crises improve expected returns.
+6. **Operational scope:** MySQL and Tableau implement a reproducible local analytics workflow, not a continuously updated trading or risk production system.
 
+## 10. Conclusion
 
+The AMZN case study demonstrates an end-to-end risk analytics workflow spanning Python-based stochastic simulation, rolling out-of-sample evaluation, MySQL data persistence, SQL reporting views, and Tableau dashboards. The five-year baseline simulation estimates a **15.6%** loss probability and **−57.9%** simple-return Expected Shortfall at the 5% tail; doubling assumed volatility raises modeled loss probability to **30.6%** and worsens Expected Shortfall to **−91.81%**.
 
-
-
+The strongest practical takeaway is not a directional price forecast. It is the importance of evaluating **loss probability and left-tail severity alongside mean and median outcomes**, and of evaluating model coverage alongside interval width. Results remain conditional on a simplified GBM distribution and should be interpreted as analytical scenario comparisons rather than investment advice.
