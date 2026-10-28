@@ -1,0 +1,2 @@
+run_id,ticker,model,train_start,train_end,forecast_horizon,n_sims,seed,initial_price
+AMZN_GBM_2025_422,AMZN,GBM,2020-01-02,2024-12-31,1260,1000,422,219.38999938964844

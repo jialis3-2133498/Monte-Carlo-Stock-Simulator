@@ -1,0 +1,9 @@
+
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+Quant_Monte_Carlo.zip
+.env
+.env.*
+!.env.example

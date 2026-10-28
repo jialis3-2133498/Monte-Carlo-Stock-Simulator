@@ -20,9 +20,12 @@ The goal of this project is to:
 The target asset used in this study is Amazon (AMZN).
 ## Data
 * Source: `yfinance`
-* Estimation window: 01/01/2020 to 01/01/2025
-* Backtest window: 01/01/2020 to 03/11/2026
+* Historical data start: 2020-01-01
+* Model estimation period: 2020-01-01 to 2024-12-31
+* Rolling backtest: 756-day training window, 63-day testing horizon, 21-day step
+* Latest backtest evaluation end date (saved results): 2026-03-11
 * Trading days per year: 252
+
 
 ## Model Assumptions
 Daily log returns are modeled as:
@@ -40,11 +43,13 @@ $$
 Under the Geometric Brownian Motion (GBM) framework, this implies that future prices are lognormally distributed. 
 
 Parameter estimation is performed using Maximum Likelihood Estimation (MLE):
-* $\mu$ = sample mean of log returns
-* $\sigma$ = sample standard deviation of log returns
+* $\mu$ = Mean of historical daily log returns
+* $\sigma$ = Maximum likelihood estimate of daily volatility (standard deviation with 'ddof=0')
 
-Time step: 
-$\Delta t$ is $1/252$
+Simulation Time step: 1 trading day.
+The model estimates the mean and standard deviation of daily
+log returns and simulates returns directly at the daily frequency.
+A trading year is approximated as 252 trading days.
 
 ## Simulation Setup
 * Forecast horizon: 5 years (1260 trading days)
@@ -83,15 +88,19 @@ python main.py
 Produces:
 ```bash
 outputs/
-  rolling_backtest.csv
-  backtest_summary.csv
-  simulation_metrics.csv
-  returns_descriptive_stats.csv
-  future_price_paths.png
-  log_daily_returns_hist.png
-  log_daily_returns_qq.png
-  horizon_end_prices_hist.png
-  horizon_logpayoff_scale_hist.png
+├── rolling_backtest.csv
+├── simulation_metrics.csv
+├── returns_descriptive_stats.csv
+├── returns_descriptive_stats.png
+├── simulation_metrics.png
+├── future_price_paths.png
+├── log_daily_returns_hist.png
+├── log_daily_returns_qq.png
+├── rolling_volatility.png
+├── backtest_simulated_returns_vs_actual_returns.png
+├── backtest_interval_width.png
+├── horizon_end_prices_hist.png
+└── horizon_logpayoff_scale_hist.png
 ```
 All experiments are fully reproducible via a fixed random seed.
 

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
@@ -11,6 +12,10 @@ from src.plots import plot_rolling_volatility, plot_backtest_interval_width
 from src.plots import plot_csv_table
 from src.metrics import compute_payoffs, summarize_horizon_metrics
 from src.simulation import monte_carlo_price_paths
+from src.database import load_historical_prices, load_simulation_runs
+from src.database import load_simulation_price_summary, load_simulation_metrics
+from src.database import load_backtest_results, load_scenario_metrics
+from src.scenarios import run_scenario_analysis
 
 
 def main():
@@ -21,8 +26,19 @@ def main():
     TRAIN_END = "2025-01-01"
     BACKTEST_END = "2026-12-31"
     SEED = 422
+    RUN_ID = "AMZN_GBM_2025_422"
     os.makedirs("outputs", exist_ok=True)
     prices = access_stock_price(TICKER, START, END, "1d")
+    # Export historical adjusted closing prices for SQL
+    historical_prices_df = prices.rename("adjusted_close").reset_index()
+    historical_prices_df.columns = ["trade_date", "adjusted_close"]
+    historical_prices_df.insert(0, "ticker", TICKER)
+    historical_prices_df.to_csv(
+        "outputs/historical_prices.csv",
+        index=False
+    )
+    load_historical_prices(historical_prices_df)
+
     prices_2025_2026 = prices["2025":"2026"]
     train_prices = prices.loc[: TRAIN_END]
     train_r = calculate_log_daily_returns(train_prices)
@@ -85,18 +101,78 @@ def main():
     T = 1260  # Simulate the price in the future 1260 days
     N = 1000  # For each day, we will simulate 1000 paths/day
     S_0 = train_prices.iloc[-1]
+
+    # Export simulation run metadata
+    simulation_runs_df = pd.DataFrame([{
+        "run_id": RUN_ID,
+        "ticker": TICKER,
+        "model": "GBM",
+        "train_start": str(train_prices.index.min().date()),
+        "train_end": str(train_prices.index.max().date()),
+        "forecast_horizon": T,
+        "n_sims": N,
+        "seed": SEED,
+        "initial_price": float(S_0)
+    }])
+    simulation_runs_df.to_csv(
+        "outputs/simulation_runs.csv",
+        index=False
+    )
+    load_simulation_runs(simulation_runs_df)
+
     sim_price_paths = monte_carlo_price_paths(
         train_prices=train_prices,
         train_returns=train_r,
         horizon=T,
         n_sims=N,
         seed=SEED)
+    # ================ Scenario-Based Risk Analysis ================
+    scenario_results = run_scenario_analysis(
+        train_prices=train_prices,
+        train_returns=train_r,
+        horizon=T,
+        n_sims=N,
+        seed=SEED,
+        alpha=0.05
+    )
+    scenario_results.insert(0, "run_id", RUN_ID)
+
+    scenario_results.to_csv(
+        "outputs/scenario_metrics.csv",
+        index=False
+    )
+
+    print("\nScenario-Based Risk Analysis:")
+    print(scenario_results.to_string(index=False))
+    assert np.isclose(
+        scenario_results.loc[0, "mean_end_price"],
+        sim_price_paths[-1, :].mean()
+    ), "Scenario Base Case does not match original simulation"
+
+    print("AMZN Base Case consistency: PASS")
+    load_scenario_metrics(scenario_results)
 
     # Summary statistics across simulation paths
     mean_prices = sim_price_paths.mean(axis=1)
     median_prices = np.median(sim_price_paths, axis=1)
     p05 = np.percentile(sim_price_paths, 5, axis=1)
     p95 = np.percentile(sim_price_paths, 95, axis=1)
+
+    # Export daily simulation summary for SQL and Tableau
+    simulation_summary_df = pd.DataFrame({
+        "run_id": RUN_ID,
+        "day": np.arange(T+1),
+        "mean_price": mean_prices,
+        "median_price": median_prices,
+        "p05_price": p05,
+        "p95_price": p95
+    })
+    simulation_summary_df.to_csv(
+        "outputs/simulation_price_summary.csv",
+        index=False
+    )
+    load_simulation_price_summary(simulation_summary_df)
+
 
     # mean_prices vs. median_prices
     plot_future_price_paths(
@@ -148,8 +224,29 @@ def main():
         end_prices=end_prices,
         S0=S_0,
         alpha=0.05)
+    # Link risk metrics to the simulation run
+    results_df.insert(0, "run_id", RUN_ID)
+    # Rename columns to match MySQL schema
+    results_df = results_df.rename(columns={
+        "S0": "initial_price",
+        "Mean": "mean_end_price",
+        "Median": "median_end_price",
+        "5th pct": "p05_end_price",
+        "95th pct": "p95_end_price",
+        "Prob(ST < S0)": "prob_loss",
+        "Log_loss": "log_loss",
+        "Simp_loss": "simple_loss",
+        "VaR_log": "var_log",
+        "ES_log": "es_log",
+        "VaR_simp": "var_simple",
+        "ES_simp": "es_simple"
+    })
+    # Covert boolean values to integers for MySQL compatibility
+    backtest_df["inside_band"] = backtest_df["inside_band"].astype(int)
     backtest_df.to_csv("outputs/rolling_backtest.csv", index=False)
     results_df.to_csv("outputs/simulation_metrics.csv", index=False)
+    load_simulation_metrics(results_df)
+    load_backtest_results(backtest_df)
     plot_csv_table(
         "outputs/simulation_metrics.csv",
         "outputs/simulation_metrics.png"

@@ -336,17 +336,16 @@ def plot_csv_table(
     df = pd.read_csv(path)
     if "Unnamed: 0" in df.columns:
         df = df.rename(columns={"Unnamed: 0": "Statistic"})
-    for i in range(len(df)):
-        value = float(df.iloc[i, 1])
-        if df.iloc[i, 0] == "count":
-            df.iloc[i, 1] = int(value)
-        else:
-            df.iloc[i, 1] = f"{value:.6f}"
+    display_df = df.copy()
+    for col in display_df.select_dtypes(include="number").columns:
+        display_df[col] = display_df[col].map(
+            lambda x: f"{x:.6f}"
+        )
     fig, ax = plt.subplots(figsize=(10, 3.8))
     ax.axis("off")
     table = ax.table(
-        cellText=df.values,
-        colLabels=df.columns,
+        cellText=display_df.values,
+        colLabels=display_df.columns,
         cellLoc="center",
         loc="center"
     )

@@ -5,7 +5,8 @@ def monte_carlo_cumlog_paths(
         train_returns,
         horizon,
         n_sims=1000,
-        seed=422):
+        seed=422,
+        volatility_multiplier=1.0):
     """
     Simulate Monte Carlo paths of cumulative log returns.
 
@@ -37,10 +38,14 @@ def monte_carlo_cumlog_paths(
     # Estimate mean and volatility from training returns (MLE)
     mu = train_returns.mean()
     sigma = train_returns.std(ddof=0)
+
+    if not np.isfinite(volatility_multiplier) or volatility_multiplier <= 0:
+        raise ValueError("volatility_multiplier must be finite and positive")
+    scenario_sigma = sigma * volatility_multiplier
     # Generate simulated daily log returns
     simulated_daily_returns = rng.normal(
         loc=mu,
-        scale=sigma,
+        scale=scenario_sigma,
         size=(horizon, n_sims))
     # Convert daily returns to cumulative log returns
     cum_log_returns = np.cumsum(simulated_daily_returns, axis=0)
@@ -52,7 +57,8 @@ def monte_carlo_price_paths(
         train_returns,
         horizon,
         n_sims=1000,
-        seed=422):
+        seed=422,
+        volatility_multiplier=1.0):
     """
     Simulate Monte Carlo paths for future stock prices
 
@@ -86,7 +92,8 @@ def monte_carlo_price_paths(
         train_returns=train_returns,
         horizon=horizon,
         n_sims=n_sims,
-        seed=seed
+        seed=seed,
+        volatility_multiplier=volatility_multiplier
     )
     price_paths = np.empty((horizon+1, n_sims))
     price_paths[0, :] = S_0
