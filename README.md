@@ -141,5 +141,5 @@ _Add vetted screenshots here after exporting from Tableau. Public Tableau link p
 
 ## Portfolio links
 
-- **Tableau Public:** Add the verified public dashboard URL after publishing.
+- **Tableau Public:** [Tableau Dashbord](https://public.tableau.com/app/profile/jiali.sheng8192/viz/Monte_Carlo_Financial_Risk_Analytics_test/Dashboard1).
 - **Technical report:** [Report.md](Report.md)
